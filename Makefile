@@ -5,7 +5,8 @@ JOBS    ?= 10
 NODES   ?= 21 41 61 81 101
 SEEDS   ?= 1 2 3
 
-.PHONY: help test build run run-all analyse figures clean clean-results
+.PHONY: help test build run run-all analyse figures clean clean-results \
+        demo-reactive demo-predictive demo-compare
 
 help:
 	@echo "make test         host-compiled unit tests for the estimator"
@@ -16,6 +17,11 @@ help:
 	@echo "make figures      figures into analysis/out/"
 	@echo "make clean        remove build artefacts"
 	@echo "make clean-results  remove simulation logs as well"
+	@echo ""
+	@echo "make demo-reactive    classroom demo: Cooja GUI, TaCFPext (reactive trigger)"
+	@echo "make demo-predictive  classroom demo: Cooja GUI, P-TaCFPext (predictive trigger)"
+	@echo "make demo-compare     run both headless (~1.5 min) and print a comparison table"
+	@echo "   options: SPEED=0.5  LOAD=moderate  SEED=2   (see demo/README.md)"
 
 test:
 	$(MAKE) -C tests
@@ -48,3 +54,17 @@ clean:
 
 clean-results:
 	rm -rf results/*/ analysis/out
+
+# --- Classroom demo (demo/README.md) ------------------------------------------
+SPEED ?= 1.0
+LOAD  ?= paper
+SEED  ?= 1
+
+demo-reactive:
+	$(PY) demo/demo.py gui reactive --speed $(SPEED) --load $(LOAD) --seed $(SEED)
+
+demo-predictive:
+	$(PY) demo/demo.py gui predictive --speed $(SPEED) --load $(LOAD) --seed $(SEED)
+
+demo-compare:
+	$(PY) demo/demo.py compare --load $(LOAD) --seed $(SEED)

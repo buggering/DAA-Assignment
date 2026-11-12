@@ -97,6 +97,7 @@ DEFAULT_FLAGS = dict(
     APP_LOW_RATE=1,
     APP_PERIOD_BI=8,
     APP_BURST_BI=2,
+    APP_DEMO_LEDS=0,           # classroom demo only (demo/demo.py)
 )
 
 MAKEFILE = """CONTIKI_PROJECT = node
@@ -122,6 +123,7 @@ CFLAGS += -DAPP_LOW_RATE={APP_LOW_RATE}
 CFLAGS += -DAPP_PERIOD_BI={APP_PERIOD_BI}
 CFLAGS += -DAPP_BURST_BI={APP_BURST_BI}
 CFLAGS += -DAPP_RUN_SECONDS={APP_RUN_SECONDS}
+CFLAGS += -DAPP_DEMO_LEDS={APP_DEMO_LEDS}
 include $(CONTIKI)/Makefile.include
 
 # Cooja compiles each mote type to its own library path, handed to the build

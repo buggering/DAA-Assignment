@@ -25,6 +25,18 @@
 
 #include <stdio.h>
 
+/* Classroom demo only: drive the mote LEDs from the node's DSME state so the
+ * Cooja network view shows the burst, the refusals and the extended CFP.
+ * Off by default; the experiment builds never set it. LEDs are write-only
+ * from the firmware's side, so turning this on changes nothing the protocol
+ * sees. */
+#ifndef APP_DEMO_LEDS
+#define APP_DEMO_LEDS               0
+#endif
+#if APP_DEMO_LEDS
+#include "dev/leds.h"
+#endif
+
 /*---------------------------------------------------------------------------*/
 /* Offered load, in packets per multi-superframe. Reference C uses 1 and 21.  */
 #ifndef APP_LOW_RATE
@@ -77,6 +89,19 @@ current_rate(void)
   return off < APP_BURST_BI ? APP_BURST_RATE : APP_LOW_RATE;
 }
 /*---------------------------------------------------------------------------*/
+#if APP_DEMO_LEDS
+/*   red     this node is in its traffic burst
+ *   yellow  its GTS requests are being refused (failure counter > 0)
+ *   green   it holds an extGTS: a CAP has been converted to extended CFP */
+static void
+demo_leds(uint8_t rate)
+{
+  leds_set((rate == APP_BURST_RATE ? LEDS_RED : 0)
+           | (dsme_alloc_fail_count > 0 ? LEDS_YELLOW : 0)
+           | (dsme_allocated_ext_tx_slots() > 0 ? LEDS_GREEN : 0));
+}
+#endif
+/*---------------------------------------------------------------------------*/
 PROCESS_THREAD(app_process, ev, data)
 {
   static struct etimer et;
@@ -97,6 +122,12 @@ PROCESS_THREAD(app_process, ev, data)
 
   DSME_LOG("ROLE|n=%u|sender=%u|peer=%u|group=%u|pan=%u",
            me, is_sender, peer, group, me == 1);
+#if APP_DEMO_LEDS
+  /* Colour the mote by role in the Cooja network view: coordinator blue,
+   * senders lilac, receivers grey -- none of them a LED colour. */
+  printf("#A color=%s\n",
+         me == 1 ? "BLUE" : (is_sender ? "#D9B3FF" : "LIGHTGRAY"));
+#endif
 
   /* Stagger the generators so that every sender does not enqueue on the same
    * microsecond. */
@@ -132,6 +163,9 @@ PROCESS_THREAD(app_process, ev, data)
       /* Honoured only when DSME_DEMAND_SRC is DSME_DEMAND_ORACLE. */
       dsme_set_demand(rate);
     }
+#if APP_DEMO_LEDS
+    demo_leds(rate);
+#endif
 
     credit += (uint32_t)rate * APP_TICK_US;
     while(credit >= DSME_MS_DURATION_US) {
