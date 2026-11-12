@@ -91,7 +91,8 @@ current_rate(void)
 /*---------------------------------------------------------------------------*/
 #if APP_DEMO_LEDS
 /*   red     this node is in its traffic burst
- *   yellow  its GTS requests are being refused (failure counter > 0)
+ *   yellow  its GTS requests are being refused (failure counter > 0);
+ *           Cooja's network view and timeline draw this LED in blue
  *   green   it holds an extGTS: a CAP has been converted to extended CFP */
 static void
 demo_leds(uint8_t rate)
@@ -123,10 +124,11 @@ PROCESS_THREAD(app_process, ev, data)
   DSME_LOG("ROLE|n=%u|sender=%u|peer=%u|group=%u|pan=%u",
            me, is_sender, peer, group, me == 1);
 #if APP_DEMO_LEDS
-  /* Colour the mote by role in the Cooja network view: coordinator blue,
-   * senders lilac, receivers grey -- none of them a LED colour. */
+  /* Colour the mote by role in the Cooja network view: coordinator gold,
+   * senders lilac, receivers grey -- none of them a colour Cooja uses for
+   * the LEDs (red, green, and blue for the yellow LED). */
   printf("#A color=%s\n",
-         me == 1 ? "BLUE" : (is_sender ? "#D9B3FF" : "LIGHTGRAY"));
+         me == 1 ? "#FFD700" : (is_sender ? "#D9B3FF" : "LIGHTGRAY"));
 #endif
 
   /* Stagger the generators so that every sender does not enqueue on the same

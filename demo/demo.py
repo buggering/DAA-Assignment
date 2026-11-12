@@ -129,6 +129,13 @@ def metrics_for(log):
     drops = [r["burst_drop_ratio"] for r in rows if "burst_drop_ratio" in r]
     early = [r["early_drop_ratio"] for r in rows if "early_drop_ratio" in r]
     delay = [r["burst_delay_ms"] for r in rows if r.get("burst_delay_ms") is not None]
+    # Queue loss from the final STATS lines: packets discarded in the queue,
+    # because their one-multi-superframe deadline passed or the queue was
+    # full, over packets generated. Unlike 1 - PDR it does not count packets
+    # still queued when the run stops.
+    stats = {r["n"]: r for r in recs if r["event"] == "STATS"}
+    gen = sum(s.get("gen", 0) for s in stats.values())
+    qlost = sum(s.get("dropdl", 0) + s.get("dropq", 0) for s in stats.values())
     return {
         "bursts": trig["n"],
         "trig_rate": trig.get("reach_rate"),
@@ -139,6 +146,7 @@ def metrics_for(log):
         "burst_drop": sum(drops) / len(drops) if drops else None,
         "burst_delay": sum(delay) / len(delay) if delay else None,
         "pdr": net.get("pdr"),
+        "qloss": qlost / gen if gen else None,
         "delay": net.get("mean_delay_ms"),
         "kbps": net.get("throughput_kbps"),
         "ctrl": net.get("control_per_delivered"),
@@ -173,6 +181,7 @@ def cmd_compare(args):
         ("Drop ratio, whole burst", "burst_drop", "ratio"),
         ("Mean delay during bursts", "burst_delay", "ms"),
         ("Delivery ratio (whole run)", "pdr", "ratio"),
+        ("Queue loss (whole run) **", "qloss", "ratio"),
         ("Throughput, kbit/s", "kbps", "f1"),
         ("Control frames per delivered packet", "ctrl", "f2"),
     ]
@@ -195,6 +204,8 @@ def cmd_compare(args):
     print("* a burst that never reached the event is counted at {} (the"
           .format(never))
     print("  observation horizon), so failures are not hidden by the median.")
+    print("** packets dropped in the queue (deadline passed or queue full) /")
+    print("   packets generated; packets still queued at the end are not counted.")
     print("One seed only. The report's figures are means over three seeds.")
     print()
 

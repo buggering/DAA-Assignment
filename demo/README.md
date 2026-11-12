@@ -32,18 +32,46 @@ Press **Start** in the Cooja toolbar. The run stops by itself at 60 s and
 prints a result box in the commentary window. Close Cooja before opening the
 other arm. If Cooja asks whether to save the simulation on exit, choose **No**.
 
+Two one-time tweaks for a cleaner screen. Press **F1** in Cooja to hide the
+Quick help panel on the right (Cooja remembers this). Click the small **▲** on
+the divider inside the commentary window to fold away the script code, so the
+commentary gets the whole window.
+
 Pace: the default runs in real time. To slow down at a burst, use Cooja's
 speed control in the toolbar or Pause. Alternatively start slower with
 `make demo-predictive SPEED=0.5`. `LOAD=moderate` uses a burst of 6 packets
 instead of 21, the regime where failures are transient. `SEED=2` uses a
 different random topology.
 
+## Quote the table, not the result box
+
+A run in the Cooja window is not exactly repeatable, at any speed. Senders in
+the same group start their bursts on the same simulated microsecond, and in
+window mode Cooja does not always process those simultaneous events in the
+same order, which changes how the contention for the CAP plays out. Runs
+without the window (`make demo-compare`, and every experiment behind the
+main README) give the same numbers every time.
+
+Predictive arm, seed 1, so far:
+
+| run | trigger fired | median to trigger | extCFP slot | median to slot |
+|---|---:|---:|---:|---:|
+| no window (`make demo-compare`), every run | 69 of 70 | 128 ms | 53 of 70 | 278 ms |
+| window, outcome A (2 runs) | 69 of 70 | 128 ms | 53 of 70 | 278 ms |
+| window, outcome B (1 run) | 69 of 70 | 129 ms | 50 of 70 | 290 ms |
+| window, outcome C (2 runs) | 69 of 70 | 128 ms | 42 of 70 | 1494 ms |
+
+The trigger line is stable. The extended-CFP line is not: in outcome C the
+predictive arm's median slot time is slower than the reactive arm's 1431 ms
+in the table. One window run of the reactive arm gave 742 ms to trigger and
+1306 ms to slot (table: 864 and 1431).
+
 ## What is on screen
 
 | window | shows |
 |---|---|
-| Network view (top left) | blue = PAN coordinator, lilac = sender, grey = receiver; arrows = radio frames |
-| LEDs on each sender | **red** in its burst · **yellow** GTS requests being refused · **green** holds an extended-CFP slot |
+| Network view (top left) | gold = PAN coordinator, lilac = sender, grey = receiver; arrows = radio frames |
+| LEDs on each sender | **red** in its burst · **blue** GTS requests being refused (Cooja draws the yellow LED as blue) · **green** holds an extended-CFP slot |
 | Notes (bottom left) | the legend above |
 | Commentary (top right) | every burst start, refusal and trigger with its latency, a running tally, final result |
 | Timeline (middle right) | LED history of the 10 senders, so the red-to-green gap is visible per burst |
@@ -51,7 +79,7 @@ different random topology.
 
 **The thing to point at:** the gap between a sender going **red** (burst starts)
 and going **green** (extended CFP in service). Under the reactive trigger it
-first has to collect three refusals (yellow). The predictive trigger converts
+first has to collect three refusals (blue). The predictive trigger converts
 from the forecast, before the refusals arrive.
 
 ## Expected numbers (21 nodes, seed 1, paper load)
@@ -65,11 +93,17 @@ From `make demo-compare` on this laptop:
 | median burst start → extended-CFP slot | 1431 ms | 278 ms |
 | drop ratio, first 1.5 s of a burst | 0.239 | 0.171 |
 | delivery ratio | 0.424 | 0.532 |
+| queue loss (deadline missed or queue full) | 0.557 | 0.448 |
 | control frames per delivered packet | 0.69 | 1.02 |
 
-One seed. The main README's figures are means over three seeds, so they differ
-slightly (for example 1355 ms vs 128 ms for the trigger latency). The control-frame
-row is the cost of predicting, and the main README discusses it.
+One seed. The main README's figures are pooled over three seeds and were produced
+on the lab machine. They do not all reproduce on this laptop. Seeds 1 to 3 here
+give the reactive trigger a median of 865 ms, against 1355 ms in the main README,
+while P-TaCFPext's 128 ms and TaCFPext's delivery ratio (0.385 against 0.386)
+match. This laptop runs Contiki-NG v5.1 built with Apple clang; the lab results
+came from a different Contiki-NG checkout and compiler, and the cause has not
+been pinned down. The control-frame row is the cost of predicting, and the main
+README discusses it.
 
 ## How it is built
 

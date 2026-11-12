@@ -51,7 +51,10 @@ while(true) {{
 # --- Classroom demo (--gui) --------------------------------------------------
 # The live commentary measures exactly what analysis/metrics.py measures, with
 # the same settle time and horizon, so the numbers on screen agree with the
-# offline comparison (demo/demo.py compare) of the same variant and seed.
+# offline comparison (demo/demo.py compare) of the same variant and seed when
+# Cooja runs without a window. A run in the window can differ: Cooja's GUI
+# mode does not always process events that fall on the same simulated
+# microsecond in the same order (demo/README.md).
 GUI_SCRIPT = """TIMEOUT({timeout_ms});
 var MODES = ["Legacy DSME (no CFP extension)",
              "DSME with CAP reduction",
@@ -171,16 +174,16 @@ while (true) {{
 
 GUI_NOTES = """WHAT YOU ARE LOOKING AT   ({label})
 
-Blue = PAN coordinator.  Lilac = sender.  Grey = receiver.
+Gold = PAN coordinator.  Lilac = sender.  Grey = receiver.
 Senders burst in two alternating groups: 2 s of heavy traffic every 8 s.
 
 LEDs on each sender
   RED     the node is in its traffic burst
-  YELLOW  its GTS requests are being refused
+  BLUE    its GTS requests are being refused
   GREEN   it holds an extended-CFP slot (CAP converted)
 
 The race to watch: how long from RED to GREEN?
-  Reactive  TaCFPext waits for 3 refusals (YELLOW) first.
+  Reactive  TaCFPext waits for 3 refusals (BLUE) first.
   P-TaCFPext forecasts the burst and converts early.
 
 Commentary window: every burst, refusal and trigger with
